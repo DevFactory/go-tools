@@ -17,12 +17,12 @@ import (
 	"net"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
 	cmdmock "github.com/DevFactory/go-tools/pkg/linux/command/mock"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	netmock "github.com/DevFactory/go-tools/pkg/nettools/mocks"
 	netth "github.com/DevFactory/go-tools/pkg/nettools/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_execIPRouteHelper_RemoveIPRuleForSourceIP(t *testing.T) {
@@ -40,7 +40,7 @@ func Test_execIPRouteHelper_RemoveIPRuleForSourceIP(t *testing.T) {
 			name: "try to remove non existing rule",
 			rule: nt.NewIPRuleForSourceIP("192.168.3.11", "eth2"),
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ip rule | grep \"from 192\\.168\\.3\\.11 lookup eth2 $\"",
 					Returned: netth.ExecResultGrepNotFound(),
 				},
@@ -72,18 +72,18 @@ func Test_execIPRouteHelper_RemoveAllIPRulesForAddressesInSubnet(t *testing.T) {
 				Mask: net.IPv4Mask(255, 255, 255, 0),
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip rule",
 					Returned: netth.ExecResultExitCodeStdOutput(0,
 						"11:	from 10.69.10.210 lookup 10.69.10.211\n"+
 							"12:	from 192.168.3.1 lookup eth2\n"+
 							"13:	from 192.168.3.2 lookup eth2\n"),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip rule del from 192.168.3.1 lookup eth2",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip rule del from 192.168.3.2 lookup eth2",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -96,7 +96,7 @@ func Test_execIPRouteHelper_RemoveAllIPRulesForAddressesInSubnet(t *testing.T) {
 				Mask: net.IPv4Mask(255, 255, 255, 0),
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip rule",
 					Returned: netth.ExecResultExitCodeStdOutput(0, "11:	from 10.69.10.210 lookup 10.69.10.211\n"),
 				},
@@ -222,14 +222,14 @@ func Test_execIPRouteHelper_InitializeRoutingTablesPerInterface(t *testing.T) {
 
 func Test_execIPRouteHelper_EnsureRoutes(t *testing.T) {
 	entries := []nt.IPRouteEntry{
-		nt.IPRouteEntry{
+		{
 			TableName:    "eth1",
 			TargetPrefix: "10.10.10.0/24",
 			Mode:         "dev",
 			Gateway:      "eth1",
 			Options:      "scope local",
 		},
-		nt.IPRouteEntry{
+		{
 			TableName:    "eth1",
 			TargetPrefix: "default",
 			Mode:         "via",
@@ -247,15 +247,15 @@ func Test_execIPRouteHelper_EnsureRoutes(t *testing.T) {
 			name:    "Ensures 2 rules when table empty",
 			entries: entries,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route show tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route add 10.10.10.0/24 dev eth1 scope local tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route add default via 10.10.10.1 dev eth1 tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -266,13 +266,13 @@ func Test_execIPRouteHelper_EnsureRoutes(t *testing.T) {
 			name:    "Ensures 2 rules when table has 1 of them",
 			entries: entries,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route show tab eth1",
 					Returned: &command.ExecResult{
 						StdOut: "default via 10.10.10.1 dev eth1\n",
 					},
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route add 10.10.10.0/24 dev eth1 scope local tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -283,7 +283,7 @@ func Test_execIPRouteHelper_EnsureRoutes(t *testing.T) {
 			name:    "Ensures 2 rules when table has 2 of them",
 			entries: entries,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route show tab eth1",
 					Returned: &command.ExecResult{
 						StdOut: "10.10.10.0/24 dev eth1 scope link\ndefault via 10.10.10.1 dev eth1\n",
@@ -296,17 +296,17 @@ func Test_execIPRouteHelper_EnsureRoutes(t *testing.T) {
 			name:    "Ensures 2 rules when table has others",
 			entries: entries,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route show tab eth1",
 					Returned: &command.ExecResult{
 						StdOut: "10.10.20.0/24 dev eth1 scope link\ndefault via 10.10.20.1 dev eth1\n",
 					},
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route add 10.10.10.0/24 dev eth1 scope local tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ip route add default via 10.10.10.1 dev eth1 tab eth1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},

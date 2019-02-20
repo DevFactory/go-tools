@@ -17,11 +17,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
 	cmdmock "github.com/DevFactory/go-tools/pkg/linux/command/mock"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	"github.com/DevFactory/go-tools/pkg/nettools/mocks"
+	"github.com/stretchr/testify/mock"
 )
 
 // GetExecInfosForIPRouteInterfaceInit returns mock ExecInfo slice for commands
@@ -65,7 +65,7 @@ func GetExecMockResultsForEnsureOnly1IPRule(rule nt.IPRule, otherRules []nt.IPRu
 		checkReturned += other.ToString() + "\n"
 	}
 	res := []*cmdmock.ExecInfo{
-		&cmdmock.ExecInfo{
+		{
 			Expected: checkExpected,
 			Returned: ExecResultGrepFound(checkReturned),
 		},

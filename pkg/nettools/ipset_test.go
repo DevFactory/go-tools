@@ -18,11 +18,11 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
 	cmdmock "github.com/DevFactory/go-tools/pkg/linux/command/mock"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	netth "github.com/DevFactory/go-tools/pkg/nettools/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_execIPSetHelper_EnsureSetExists(t *testing.T) {
@@ -37,7 +37,7 @@ func Test_execIPSetHelper_EnsureSetExists(t *testing.T) {
 			setName: "12341234abc",
 			setType: "hash:ip",
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset create 12341234abc hash:ip comment counters -exist",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -67,7 +67,7 @@ func Test_execIPSetHelper_DeleteSet(t *testing.T) {
 			setName: "12341234abc",
 			err:     nil,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset destroy 12341234abc",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -80,7 +80,7 @@ func Test_execIPSetHelper_DeleteSet(t *testing.T) {
 				Stderr: []byte("ipset v6.34: The set with the given name does not exist"),
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset destroy 12341234abc",
 					Returned: execResultIpsetNotFound(),
 				},
@@ -112,7 +112,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			err:      nil,
 			expected: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -126,7 +126,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			},
 			expected: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: execResultIpsetNotFound(),
 				},
@@ -138,7 +138,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			err:      nil,
 			expected: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.2")},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: execResultIpsetIPs(),
 				},
@@ -171,7 +171,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			err:       nil,
 			addresses: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -183,15 +183,15 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			err:       nil,
 			addresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.2")},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset add 12341234abc 127.0.0.1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset add 12341234abc 127.0.0.2",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -203,15 +203,15 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			err:       nil,
 			addresses: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: execResultIpsetIPs(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset del 12341234abc 127.0.0.1",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset del 12341234abc 127.0.0.2",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -223,15 +223,15 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			err:       nil,
 			addresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.3")},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
 					Returned: execResultIpsetIPs(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset add 12341234abc 127.0.0.3",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "ipset del 12341234abc 127.0.0.2",
 					Returned: netth.ExecResultOKNoOutput(),
 				},

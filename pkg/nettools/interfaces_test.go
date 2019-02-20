@@ -20,9 +20,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	"github.com/DevFactory/go-tools/pkg/nettools/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 var refreshTime = time.Microsecond

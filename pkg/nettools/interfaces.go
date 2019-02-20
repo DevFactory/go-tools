@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	enet "github.com/DevFactory/go-tools/pkg/extensions/net"
 	etime "github.com/DevFactory/go-tools/pkg/extensions/time"
+	log "github.com/sirupsen/logrus"
 )
 
 // Interface provides addresses and name of a single local network interface

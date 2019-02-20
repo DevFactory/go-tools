@@ -19,12 +19,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
 	cmdmock "github.com/DevFactory/go-tools/pkg/linux/command/mock"
 	"github.com/DevFactory/go-tools/pkg/nettools"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	netth "github.com/DevFactory/go-tools/pkg/nettools/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -46,11 +46,11 @@ func Test_execIPTablesHelper_EnsureChainExists(t *testing.T) {
 			chainName:      "test",
 			expectedResult: nil,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: execResultIPTablesNotFound(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -N test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -62,7 +62,7 @@ func Test_execIPTablesHelper_EnsureChainExists(t *testing.T) {
 			chainName:      "test",
 			expectedResult: nil,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -74,11 +74,11 @@ func Test_execIPTablesHelper_EnsureChainExists(t *testing.T) {
 			chainName:      "test",
 			expectedResult: nil,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: execResultIPTablesTimeout(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -90,15 +90,15 @@ func Test_execIPTablesHelper_EnsureChainExists(t *testing.T) {
 			chainName:      "test",
 			expectedResult: &exec.ExitError{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: execResultIPTablesTimeout(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: execResultIPTablesTimeout(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -n -w 1 -t nat -L test",
 					Returned: execResultIPTablesTimeout(),
 				},
@@ -130,11 +130,11 @@ func Test_execIPTablesHelper_EnsureJumpToChainExists(t *testing.T) {
 			baseChain: "SN-PREROUTING",
 			chainName: "test",
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-PREROUTING -m comment --comment \"for SNM\" -j test",
 					Returned: execResultIPTablesNotFound(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -A SN-PREROUTING -m comment --comment \"for SNM\" -j test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -146,7 +146,7 @@ func Test_execIPTablesHelper_EnsureJumpToChainExists(t *testing.T) {
 			baseChain: "SN-PREROUTING",
 			chainName: "test",
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-PREROUTING -m comment --comment \"for SNM\" -j test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -180,11 +180,11 @@ func Test_execIPTablesHelper_EnsureExistsInsert(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: execResultIPTablesNotFound(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -I SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -200,7 +200,7 @@ func Test_execIPTablesHelper_EnsureExistsInsert(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -234,7 +234,7 @@ func Test_execIPTablesHelper_Delete(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: execResultIPTablesNotFound(),
 				},
@@ -250,11 +250,11 @@ func Test_execIPTablesHelper_Delete(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -C SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -D SN-123 -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -286,7 +286,7 @@ func Test_execIPTablesHelper_FlushChain(t *testing.T) {
 			chain:         "test",
 			expectedError: true,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -F test",
 					Returned: execResultIPTablesNotFound(),
 				},
@@ -298,7 +298,7 @@ func Test_execIPTablesHelper_FlushChain(t *testing.T) {
 			chain:         "test",
 			expectedError: false,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -F test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -330,7 +330,7 @@ func Test_execIPTablesHelper_DeleteChain(t *testing.T) {
 			chain:         "test",
 			expectedError: true,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -X test",
 					Returned: execResultIPTablesNotFound(),
 				},
@@ -342,7 +342,7 @@ func Test_execIPTablesHelper_DeleteChain(t *testing.T) {
 			chain:         "test",
 			expectedError: false,
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -X test",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -374,7 +374,7 @@ func Test_execIPTablesHelper_LoadRules(t *testing.T) {
 			chain:    "test",
 			expected: []*nettools.IPTablesRuleArgs{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -385,14 +385,14 @@ func Test_execIPTablesHelper_LoadRules(t *testing.T) {
 			table: "nat",
 			chain: "test",
 			expected: []*nettools.IPTablesRuleArgs{
-				&nettools.IPTablesRuleArgs{
+				{
 					Table:     "nat",
 					ChainName: "test",
 					Selector:  strings.Split("-p tcp --dport 8080", " "),
 					Action:    strings.Split("DNAT --to-destination 127.0.0.1:9090", " "),
 					Comment:   "for mapping default/map1 [tcp:8080:9090]",
 				},
-				&nettools.IPTablesRuleArgs{
+				{
 					Table:     "nat",
 					ChainName: "test",
 					Selector:  strings.Split("-p tcp --dport 3030", " "),
@@ -401,7 +401,7 @@ func Test_execIPTablesHelper_LoadRules(t *testing.T) {
 				},
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2OKRules(),
 				},
@@ -412,7 +412,7 @@ func Test_execIPTablesHelper_LoadRules(t *testing.T) {
 			table: "nat",
 			chain: "test",
 			expected: []*nettools.IPTablesRuleArgs{
-				&nettools.IPTablesRuleArgs{
+				{
 					Table:     "nat",
 					ChainName: "test",
 					Selector:  []string{},
@@ -421,7 +421,7 @@ func Test_execIPTablesHelper_LoadRules(t *testing.T) {
 				},
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSaveNoSelectorRule(),
 				},
@@ -456,7 +456,7 @@ func Test_execIPTablesHelper_DeleteByComment(t *testing.T) {
 			comment:  "for mapping default/map1 [tcp:8080:9090]",
 			expected: []*nettools.IPTablesRuleArgs{},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -468,14 +468,14 @@ func Test_execIPTablesHelper_DeleteByComment(t *testing.T) {
 			chain:   "test",
 			comment: "for mapping default/map1 [tcp:8080:9090]",
 			expected: []*nettools.IPTablesRuleArgs{
-				&nettools.IPTablesRuleArgs{
+				{
 					Table:     "nat",
 					ChainName: "test",
 					Selector:  strings.Split("-p tcp --dport 8080", " "),
 					Action:    strings.Split("DNAT --to-destination 127.0.0.1:9090", " "),
 					Comment:   "for mapping default/map1 [tcp:8080:9090]",
 				},
-				&nettools.IPTablesRuleArgs{
+				{
 					Table:     "nat",
 					ChainName: "test",
 					Selector:  strings.Split("-p tcp --dport 3030", " "),
@@ -484,11 +484,11 @@ func Test_execIPTablesHelper_DeleteByComment(t *testing.T) {
 				},
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2OKRules(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -D test -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -526,7 +526,7 @@ func Test_execIPTablesHelper_EnsureExistsOnlyAppend(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2OKRules(),
 				},
@@ -544,11 +544,11 @@ func Test_execIPTablesHelper_EnsureExistsOnlyAppend(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8081:9091]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2OKRules(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -A test -p tcp --dport 8081 -m comment --comment \"for mapping default/map1 [tcp:8081:9091]\" -j DNAT --to-destination 127.0.0.1:9091",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -566,11 +566,11 @@ func Test_execIPTablesHelper_EnsureExistsOnlyAppend(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2RulesSameComment(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -D test -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 192.168.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
@@ -588,19 +588,19 @@ func Test_execIPTablesHelper_EnsureExistsOnlyAppend(t *testing.T) {
 				Comment:   "for mapping default/map1 [tcp:8080:9090]",
 			},
 			mockInfo: []*cmdmock.ExecInfo{
-				&cmdmock.ExecInfo{
+				{
 					Expected: awkIPTablesForNatTest,
 					Returned: execResultIPTablesSave2RulesSameComment(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -D test -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -D test -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 192.168.0.1:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
-				&cmdmock.ExecInfo{
+				{
 					Expected: "iptables -w 1 -t nat -A test -p tcp --dport 8080 -m comment --comment \"for mapping default/map1 [tcp:8080:9090]\" -j DNAT --to-destination 127.0.0.10:9090",
 					Returned: netth.ExecResultOKNoOutput(),
 				},

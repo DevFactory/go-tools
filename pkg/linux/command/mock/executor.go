@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
+	"github.com/stretchr/testify/assert"
 )
 
 type ExecInfo struct {

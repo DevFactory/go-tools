@@ -19,9 +19,9 @@ import (
 	"os/exec"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/DevFactory/go-tools/pkg/linux/command"
 	"github.com/DevFactory/go-tools/pkg/extensions/collections"
+	"github.com/DevFactory/go-tools/pkg/linux/command"
+	log "github.com/sirupsen/logrus"
 )
 
 /*

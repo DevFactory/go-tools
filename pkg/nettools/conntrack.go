@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/DevFactory/go-tools/pkg/linux/command"
+	log "github.com/sirupsen/logrus"
 )
 
 /*
