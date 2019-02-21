@@ -21,6 +21,7 @@ import (
 	"time"
 )
 
+// ExecResult returns the outcome of linux command execution
 type ExecResult struct {
 	StdOut   string
 	StdErr   string
@@ -29,20 +30,33 @@ type ExecResult struct {
 	Err      error
 }
 
+// Executor allows you to run operating system commands from go 
 type Executor interface {
+	// RunCommand runs a command once and returns ExecResult
 	RunCommand(command string, args ...string) *ExecResult
+
+	// RunCommandWithRetries runs a command until the ExecResult.ExitCode is in okExitCodes or 
+	// the maximum number of retries is reached. Commands are executed one after another without 
+	// any delay.
 	RunCommandWithRetries(retries int, okExitCodes []int, command string, args ...string) *ExecResult
+
+	// RunCommandWithRetriesAndDelay runs a command until the ExecResult.ExitCode is in okExitCodes or 
+	// the maximum number of retries is reached. Commands are executed one after another with a delay
+	// of retryWaitMilliseconds between each execution.
 	RunCommandWithRetriesAndDelay(retries int, retryWaitMilliseconds int, okExitCodes []int,
 		command string, args ...string) *ExecResult
 }
 
+// NewExecutor returns a new Linux command executor.
 func NewExecutor() Executor {
 	return &LinuxExecutor{}
 }
 
+// LinuxExecutor implements Executor for Linux
 type LinuxExecutor struct {
 }
 
+// RunCommand runs a command once and returns ExecResult
 func (l *LinuxExecutor) RunCommand(command string, args ...string) *ExecResult {
 	cmd := exec.Command(command, args...)
 	var outBuf, errBuf bytes.Buffer
@@ -71,6 +85,9 @@ func (l *LinuxExecutor) RunCommand(command string, args ...string) *ExecResult {
 	return &ExecResult{outBuf.String(), errBuf.String(), 0, duration, nil}
 }
 
+// RunCommandWithRetriesAndDelay runs a command until the ExecResult.ExitCode is in okExitCodes or 
+// the maximum number of retries is reached. Commands are executed one after another with a delay
+// of retryWaitMilliseconds between each execution.
 func (l *LinuxExecutor) RunCommandWithRetriesAndDelay(retries int, retryWaitMilliseconds int,
 	okExitCodes []int, command string, args ...string) *ExecResult {
 	var result *ExecResult
@@ -91,6 +108,9 @@ func (l *LinuxExecutor) RunCommandWithRetriesAndDelay(retries int, retryWaitMill
 	return result
 }
 
+// RunCommandWithRetries runs a command until the ExecResult.ExitCode is in okExitCodes or 
+// the maximum number of retries is reached. Commands are executed one after another without 
+// any delay.
 func (l *LinuxExecutor) RunCommandWithRetries(retries int, okExitCodes []int, command string,
 	args ...string) *ExecResult {
 	return l.RunCommandWithRetriesAndDelay(retries, 0, okExitCodes, command, args...)

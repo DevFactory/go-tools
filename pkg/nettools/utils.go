@@ -79,10 +79,7 @@ func (i *ioSimpleFileOperator) AppendToFile(fileName, textToAppend string) error
 		f.Close()
 		return err
 	}
-	if err = f.Close(); err != nil {
-		return err
-	}
-	return nil
+	return f.Close()
 }
 
 // RTTablesFilename contains path to the file with ID to routing tables IDs mapping in Linux

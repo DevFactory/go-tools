@@ -93,7 +93,7 @@ func Test_Refreshing_Interfaces(t *testing.T) {
 		addrs, err := iface.Addrs()
 		assert.Nil(t, err)
 
-		expectedAddrs, err := mocks.MockInterfacesEth[ii].Addrs()
+		expectedAddrs, _ := mocks.MockInterfacesEth[ii].Addrs()
 		assert.Equal(t, len(expectedAddrs), len(addrs))
 		for i := 0; i < len(addrs); i++ {
 			assert.Equal(t, expectedAddrs[i], addrs[i])
