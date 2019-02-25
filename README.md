@@ -2,6 +2,7 @@
 [![GoDoc](https://godoc.org/github.com/DevFactory/go-tools?status.svg)](https://godoc.org/github.com/DevFactory/go-tools)
 [![Go Report Card](https://goreportcard.com/badge/github.com/DevFactory/go-tools)](https://goreportcard.com/report/github.com/DevFactory/go-tools)
 [![Build Status](https://travis-ci.com/DevFactory/go-tools.svg?branch=master)](https://travis-ci.com/DevFactory/go-tools)
+[![Coverage Status](https://coveralls.io/repos/github/DevFactory/go-tools/badge.svg?branch=master)](https://coveralls.io/github/DevFactory/go-tools?branch=master)
 
 This repository includes various tools and extensions that seemed to be missing in the standard go library and well known open source projects.
 Dependencies are managed with `dep`.
