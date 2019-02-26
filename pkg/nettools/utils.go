@@ -101,7 +101,7 @@ func MustExistNamedRoutingTable(tableName string, ioOp SimpleFileOperator) (bool
 	// make sure we won't use this range
 	hash[0] |= 1
 	tableID := uint32(uint32(hash[3])<<24 + uint32(hash[2])<<16 + uint32(hash[1])<<8 + uint32(hash[0]))
-	tableEntry := fmt.Sprintf("%d %s\n", tableID, tableName)
+	tableEntry := fmt.Sprintf("%d %s", tableID, tableName)
 
 	buf, err := ioOp.ReadFile(RTTablesFilename)
 	if err != nil {
@@ -113,7 +113,7 @@ func MustExistNamedRoutingTable(tableName string, ioOp SimpleFileOperator) (bool
 			return false, nil
 		}
 	}
-	if err = ioOp.AppendToFile(RTTablesFilename, tableEntry); err != nil {
+	if err = ioOp.AppendToFile(RTTablesFilename, fmt.Sprintf("%s\n", tableEntry)); err != nil {
 		return false, err
 	}
 

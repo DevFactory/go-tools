@@ -75,6 +75,11 @@ func TestFilteredInterfaces(t *testing.T) {
 	}
 }
 
+func TestDoesntCreateIfNamedRoutingTableAlreadyExists(t *testing.T) {
+	tableName := "eth1"
+	testMustExistNamedRoutingTable(t, tableName, []byte("1687754607 eth1\n"), false)
+}
+
 func TestMustExistNamedRoutingTables(t *testing.T) {
 	testCount := 100
 	for i := 0; i < testCount; i++ {
@@ -86,7 +91,7 @@ func TestMustExistNamedRoutingTables(t *testing.T) {
 }
 
 func testMustExistNamedRoutingTable(t *testing.T, tableName string, rtTablesReadResult []byte, expectCreated bool) {
-	ioOp := testhelpers.GetMockIOOpProviderWithEmptyRTTablesFile(rtTablesReadResult, 1)
+	ioOp := testhelpers.GetMockIOOpProviderWithEmptyRTTablesFile(rtTablesReadResult, 1, expectCreated)
 	var created bool
 	created, err := nt.MustExistNamedRoutingTable(tableName, ioOp)
 	if err != nil {
@@ -95,6 +100,9 @@ func testMustExistNamedRoutingTable(t *testing.T, tableName string, rtTablesRead
 	}
 	assert.True(t, created == expectCreated)
 	ioOp.AssertExpectations(t)
+	if created == false {
+		return
+	}
 	args := ioOp.Calls[1].Arguments
 	entry := args.String(1)
 	last_char := string(entry[len(entry)-1])

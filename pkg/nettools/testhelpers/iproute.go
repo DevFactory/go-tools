@@ -43,10 +43,13 @@ func GetExecInfosForIPRouteInterfaceInit(interfaces []nt.Interface) []*cmdmock.E
 }
 
 // GetMockIOOpProviderWithEmptyRTTablesFile returns mock IOOpProvider that mocks an empty rttables file
-func GetMockIOOpProviderWithEmptyRTTablesFile(rtTablesReadResult []byte, times int) *mocks.MockSimpleFileOperator {
+func GetMockIOOpProviderWithEmptyRTTablesFile(rtTablesReadResult []byte, times int, 
+	withAppend bool) *mocks.MockSimpleFileOperator {
 	ioOp := new(mocks.MockSimpleFileOperator)
 	ioOp.On("ReadFile", nt.RTTablesFilename).Return(rtTablesReadResult, nil).Times(times)
-	ioOp.On("AppendToFile", nt.RTTablesFilename, mock.Anything).Return(nil).Times(times)
+	if withAppend {
+		ioOp.On("AppendToFile", nt.RTTablesFilename, mock.Anything).Return(nil).Times(times)
+	}
 	return ioOp
 }
 

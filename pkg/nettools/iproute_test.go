@@ -209,7 +209,7 @@ func Test_execIPRouteHelper_InitializeRoutingTablesPerInterface(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			execMock := cmdmock.NewMockExecutorFromInfos(t, tt.mockInfo...)
-			ioOp := netth.GetMockIOOpProviderWithEmptyRTTablesFile([]byte{}, len(tt.ifaces))
+			ioOp := netth.GetMockIOOpProviderWithEmptyRTTablesFile([]byte{}, len(tt.ifaces), true)
 			ipRouteHelper := nt.NewExecIPRouteHelper(execMock, ioOp)
 			time, err := ipRouteHelper.InitializeRoutingTablesPerInterface(tt.ifaces)
 			assert.Nil(t, err)
