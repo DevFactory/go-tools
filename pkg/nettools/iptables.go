@@ -145,7 +145,7 @@ func (h *execIPTablesHelper) EnsureExistsOnlyAppend(args IPTablesRuleArgs) error
 		err = h.runChangingRule(rule.Table, rule.ChainName, "-D", selector, rule.Comment, action, nil)
 		if err != nil {
 			log.Debugf("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
-				args.Table, args.ChainName, "-D", selector, action)
+				args.Table, args.ChainName, action)
 			return err
 		}
 	}
@@ -385,7 +385,7 @@ func (h *execIPTablesHelper) loadRulesWithComment(tableName, chainName, comment 
 	for i, entry := range entries {
 		rule, err := h.parseIPTablesSaveEntry(tableName, chainName, entry)
 		if err != nil {
-			log.Debug("Can't parse rules loaded from table %s and chain %s", tableName, chainName)
+			log.Debugf("Can't parse rules loaded from table %s and chain %s", tableName, chainName)
 		}
 		result[i] = rule
 	}

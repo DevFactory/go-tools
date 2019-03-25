@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	ipsetListWithAwk = "ipset list %s | awk " + `'$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'`
+	// IPSetListWithAwk is a string to execute an ipset list command and filter out results with awk
+	IPSetListWithAwk = "ipset list %s | awk " + `'$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'`
 )
 
 /*
@@ -134,7 +135,7 @@ func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
 	// # ipset list myset | awk '$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'
 	// 127.0.0.1
 	// 127.0.0.2
-	cmd := fmt.Sprintf(ipsetListWithAwk, name)
+	cmd := fmt.Sprintf(IPSetListWithAwk, name)
 	res := h.exec.RunCommand("sh", "-c", cmd)
 	if res.Err != nil || res.ExitCode != 0 {
 		log.Debugf("Problem listing ipset %s - probably it's OK and it just doesn't exist: "+
