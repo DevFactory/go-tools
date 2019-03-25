@@ -144,7 +144,7 @@ func (h *execIPTablesHelper) EnsureExistsOnlyAppend(args IPTablesRuleArgs) error
 		selector, action := rule.GetSelectorAndAction()
 		err = h.runChangingRule(rule.Table, rule.ChainName, "-D", selector, rule.Comment, action, nil)
 		if err != nil {
-			log.Debug("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
+			log.Debugf("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
 				args.Table, args.ChainName, "-D", selector, action)
 			return err
 		}
@@ -176,7 +176,7 @@ func (h *execIPTablesHelper) DeleteByComment(table, chain, comment string) error
 		selector, action := rule.GetSelectorAndAction()
 		err = h.runChangingRule(rule.Table, rule.ChainName, "-D", selector, rule.Comment, action, nil)
 		if err != nil {
-			log.Debug("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
+			log.Debugf("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
 				table, chain, err)
 			return err
 		}
