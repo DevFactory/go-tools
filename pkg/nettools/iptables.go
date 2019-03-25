@@ -36,7 +36,7 @@ const (
 	iptablesRetriesDelayMSec = 100
 	// this uses awk to list the content of a single chain in a table using iptables-save command
 	awkIptablesSaveMagicFilter = "iptables-save | awk -v table=%s -v chain=%s " +
-		`'$0 ~ "^*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
+		`'$0 ~ "^\*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
 )
 
 // IPTablesRuleArgs provides arguments for an iptables rule
@@ -144,8 +144,8 @@ func (h *execIPTablesHelper) EnsureExistsOnlyAppend(args IPTablesRuleArgs) error
 		selector, action := rule.GetSelectorAndAction()
 		err = h.runChangingRule(rule.Table, rule.ChainName, "-D", selector, rule.Comment, action, nil)
 		if err != nil {
-			log.Debug("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
-				args.Table, args.ChainName, "-D", selector, action)
+			log.Debugf("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
+				args.Table, args.ChainName, action)
 			return err
 		}
 	}
@@ -176,7 +176,7 @@ func (h *execIPTablesHelper) DeleteByComment(table, chain, comment string) error
 		selector, action := rule.GetSelectorAndAction()
 		err = h.runChangingRule(rule.Table, rule.ChainName, "-D", selector, rule.Comment, action, nil)
 		if err != nil {
-			log.Debug("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
+			log.Debugf("Error deleting rule by comment in table %s chain %s; exact info above; error: %v",
 				table, chain, err)
 			return err
 		}
@@ -302,8 +302,8 @@ func (h *execIPTablesHelper) listRules(tableName, chainName, regexpFilter string
 	res := h.exec.RunCommandWithRetriesAndDelay(iptablesRetries, iptablesRetriesDelayMSec, []int{0},
 		"sh", "-c", shCommand)
 	if res.Err != nil || res.StdErr != "" {
-		log.Debug("Error running iptables-save with awk filter for table %s and chain %s: %v",
-			tableName, chainName, res.Err)
+		log.Errorf("Error running iptables-save with awk filter for table %s and chain %s: %v - %v",
+			tableName, chainName, res.Err, res.StdErr)
 		if res.Err != nil {
 			return nil, res.Err
 		}
@@ -385,7 +385,7 @@ func (h *execIPTablesHelper) loadRulesWithComment(tableName, chainName, comment 
 	for i, entry := range entries {
 		rule, err := h.parseIPTablesSaveEntry(tableName, chainName, entry)
 		if err != nil {
-			log.Debug("Can't parse rules loaded from table %s and chain %s", tableName, chainName)
+			log.Debugf("Can't parse rules loaded from table %s and chain %s", tableName, chainName)
 		}
 		result[i] = rule
 	}

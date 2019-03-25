@@ -14,12 +14,14 @@ limitations under the License. */
 package nettools_test
 
 import (
+	"fmt"
 	"net"
 	"os/exec"
 	"testing"
 
 	"github.com/DevFactory/go-tools/pkg/linux/command"
 	cmdmock "github.com/DevFactory/go-tools/pkg/linux/command/mock"
+	"github.com/DevFactory/go-tools/pkg/nettools"
 	nt "github.com/DevFactory/go-tools/pkg/nettools"
 	netth "github.com/DevFactory/go-tools/pkg/nettools/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -113,7 +115,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			expected: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 			},
@@ -127,7 +129,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			expected: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: execResultIpsetNotFound(),
 				},
 			},
@@ -139,7 +141,7 @@ func Test_execIPSetHelper_GetIPs(t *testing.T) {
 			expected: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.2")},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: execResultIpsetIPs(),
 				},
 			},
@@ -172,7 +174,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			addresses: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 			},
@@ -184,7 +186,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			addresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.2")},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
@@ -204,7 +206,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			addresses: []net.IP{},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: execResultIpsetIPs(),
 				},
 				{
@@ -224,7 +226,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 			addresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("127.0.0.3")},
 			mockInfo: []*cmdmock.ExecInfo{
 				{
-					Expected: "sh -c ipset list 12341234abc | tail -n +9 | cut -f1 -d' '",
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
 					Returned: execResultIpsetIPs(),
 				},
 				{
