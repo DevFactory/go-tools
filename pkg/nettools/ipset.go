@@ -24,6 +24,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	ipsetListWithAwk = "ipset list %s | awk " + `'$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'`
+)
+
 /*
 IPSetHelper provides methods to manage ipset sets.
 
@@ -110,7 +114,7 @@ func (h *execIPSetHelper) EnsureSetHasOnly(name string, ips []net.IP) error {
 		ip := iip.(net.IP)
 		log.Debugf("Adding IP %s to ipset %s", ip.String(), name)
 		if err := h.addIPToSet(name, ip); err != nil {
-			log.Debugf("Error adding entry %v to ipset %s", ip, name)
+			log.Errorf("Error adding entry %v to ipset %s", ip, name)
 			return err
 		}
 	}
@@ -127,10 +131,10 @@ func (h *execIPSetHelper) EnsureSetHasOnly(name string, ips []net.IP) error {
 }
 
 func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
-	// # ipset list myset | tail -n +9 | cut -f1 -d" "
+	// # ipset list myset | awk '$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'
 	// 127.0.0.1
 	// 127.0.0.2
-	cmd := fmt.Sprintf("ipset list %s | tail -n +9 | cut -f1 -d' '", name)
+	cmd := fmt.Sprintf(ipsetListWithAwk, name)
 	res := h.exec.RunCommand("sh", "-c", cmd)
 	if res.Err != nil || res.ExitCode != 0 {
 		log.Debugf("Problem listing ipset %s - probably it's OK and it just doesn't exist: "+
@@ -151,7 +155,7 @@ func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
 func (h *execIPSetHelper) addIPToSet(name string, ip net.IP) error {
 	res := h.exec.RunCommand("ipset", "add", name, ip.String())
 	if res.Err != nil || res.ExitCode != 0 {
-		log.Debugf("Error adding IP %s to ipset %s: %v, stdErr: %s",
+		log.Errorf("Error adding IP %s to ipset %s: %v, stdErr: %s",
 			ip.String(), name, res.Err, res.StdErr)
 		return res.Err
 	}
