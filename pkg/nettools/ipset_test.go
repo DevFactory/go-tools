@@ -452,3 +452,114 @@ func getDifferentSampleNetPorts() nt.NetPort {
 	}
 	return np
 }
+
+func TestNetPort_String(t *testing.T) {
+	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
+	type fields struct {
+		Net      net.IPNet
+		Protocol nt.Protocol
+		Port     uint16
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "formatting test",
+			fields: fields{
+				Net:      *subnet,
+				Port:     8080,
+				Protocol: nt.UDP,
+			},
+			want: "10.0.0.0/8,udp:8080",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			np := nt.NetPort{
+				Net:      tt.fields.Net,
+				Protocol: tt.fields.Protocol,
+				Port:     tt.fields.Port,
+			}
+			if got := np.String(); got != tt.want {
+				t.Errorf("NetPort.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNetPort_Equal(t *testing.T) {
+	_, subnet1, _ := net.ParseCIDR("10.0.0.0/8")
+	_, subnet2, _ := net.ParseCIDR("10.0.0.0/16")
+	tests := []struct {
+		name string
+		np1  nt.NetPort
+		np2  nt.NetPort
+		want bool
+	}{
+		{
+			name: "should be equal",
+			np1: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			np2: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			want: true,
+		},
+		{
+			name: "not equal - subnet",
+			np1: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			np2: nt.NetPort{
+				Net:      *subnet2,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			want: false,
+		},
+		{
+			name: "not equal - port",
+			np1: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			np2: nt.NetPort{
+				Net:      *subnet1,
+				Port:     8080,
+				Protocol: nt.TCP,
+			},
+			want: false,
+		},
+		{
+			name: "not equal - protocol",
+			np1: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.TCP,
+			},
+			np2: nt.NetPort{
+				Net:      *subnet1,
+				Port:     80,
+				Protocol: nt.UDP,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.np1.Equal(tt.np2); got != tt.want {
+				t.Errorf("NetPort.Equal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
