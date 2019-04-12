@@ -158,7 +158,7 @@ func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
 	// 127.0.0.2
 	lines, err := h.getIPSetEntries(name)
 	if err != nil {
-		return nil, err
+		return []net.IP{}, err
 	}
 	result := make([]net.IP, 0, len(lines))
 	for _, line := range lines {
@@ -175,7 +175,7 @@ func (h *execIPSetHelper) GetNetPorts(name string) ([]NetPort, error) {
 	// 10.0.0.0/8,tcp:80
 	lines, err := h.getIPSetEntries(name)
 	if err != nil {
-		return nil, err
+		return []NetPort{}, err
 	}
 	result := make([]NetPort, 0, len(lines))
 	for _, line := range lines {
