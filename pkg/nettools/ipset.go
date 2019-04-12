@@ -14,9 +14,11 @@ limitations under the License. */
 package nettools
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/DevFactory/go-tools/pkg/extensions/collections"
@@ -28,6 +30,30 @@ const (
 	// IPSetListWithAwk is a string to execute an ipset list command and filter out results with awk
 	IPSetListWithAwk = "ipset list %s | awk " + `'$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'`
 )
+
+/*
+NetPort allows to store net.IPNet and a port number with protocol for ipsets based on that data.
+*/
+type NetPort struct {
+	Net      net.IPNet
+	Protocol Protocol
+	Port     uint16
+}
+
+// String returns a format accepted by ipset, ie.
+// 10.0.0.0/8,tcp:80
+func (np NetPort) String() string {
+	return fmt.Sprintf("%s,%s:%d", np.Net.String(), np.Protocol, np.Port)
+}
+
+// Equal returns true only if the NetPort has exactly the same values as the parameter NetPort.
+func (np NetPort) Equal(np2 NetPort) bool {
+	if np.Net.IP.Equal(np2.Net.IP) && bytes.Compare(np.Net.Mask, np2.Net.Mask) == 0 &&
+		np.Port == np2.Port && np.Protocol == np2.Protocol {
+		return true
+	}
+	return false
+}
 
 /*
 IPSetHelper provides methods to manage ipset sets.
@@ -46,6 +72,8 @@ type IPSetHelper interface {
 	DeleteSet(name string) error
 	EnsureSetHasOnly(name string, ips []net.IP) error
 	GetIPs(name string) ([]net.IP, error)
+	EnsureSetHasOnlyNetPort(name string, netports []NetPort) error
+	GetNetPorts(name string) ([]NetPort, error)
 }
 
 type execIPSetHelper struct {
@@ -91,60 +119,52 @@ func (h *execIPSetHelper) DeleteSet(name string) error {
 }
 
 func (h *execIPSetHelper) EnsureSetHasOnly(name string, ips []net.IP) error {
-	// load the current set and assume tentatively all IPs from it are going
-	// to be removed
-	current, err := h.GetIPs(name)
-	if err != nil {
-		return err
-	}
-	newAsInterface := make([]interface{}, len(ips))
-	for i, ip := range ips {
-		newAsInterface[i] = ip
-	}
-	currentAsInterface := make([]interface{}, len(current))
-	for i, ip := range current {
-		currentAsInterface[i] = ip
-	}
-	// find the diff
-	toAdd, toRemove := collections.GetSlicesDifferences(newAsInterface, currentAsInterface,
-		func(ip1, ip2 interface{}) bool {
-			return (ip1.(net.IP)).Equal(ip2.(net.IP))
+	return h.ensureSetHasOnlyGeneric(name, "IP", ipSliceToInterface(ips),
+		func(setName string) ([]interface{}, error) {
+			ips, err := h.GetIPs(setName)
+			return ipSliceToInterface(ips), err
+		},
+		func(e1, e2 interface{}) bool {
+			return (e1.(net.IP)).Equal(e2.(net.IP))
+		},
+		func(setName string, obj interface{}) error {
+			return h.addElementToSet(name, "IP", obj.(net.IP))
+		},
+		func(setName string, obj interface{}) error {
+			return h.removeElementFromSet(name, "IP", obj.(net.IP))
 		})
+}
 
-	for _, iip := range toAdd {
-		ip := iip.(net.IP)
-		log.Debugf("Adding IP %s to ipset %s", ip.String(), name)
-		if err := h.addIPToSet(name, ip); err != nil {
-			log.Errorf("Error adding entry %v to ipset %s", ip, name)
-			return err
-		}
-	}
-	for _, iip := range toRemove {
-		ip := iip.(net.IP)
-		log.Debugf("Removing IP %s from ipset %s", ip.String(), name)
-		if err := h.removeIPFromSet(name, ip); err != nil {
-			log.Debugf("Error removing entry %v from ipset %s", ip, name)
-			return err
-		}
-	}
-
-	return nil
+func (h *execIPSetHelper) EnsureSetHasOnlyNetPort(name string, netports []NetPort) error {
+	return h.ensureSetHasOnlyGeneric(name, "NetPort", netPortSliceToInterface(netports),
+		func(setName string) ([]interface{}, error) {
+			nps, err := h.GetNetPorts(setName)
+			return netPortSliceToInterface(nps), err
+		},
+		func(e1, e2 interface{}) bool {
+			return e1.(NetPort).Equal(e2.(NetPort))
+		},
+		func(setName string, obj interface{}) error {
+			return h.addElementToSet(name, "NetPort", obj.(NetPort))
+		},
+		func(setName string, obj interface{}) error {
+			return h.removeElementFromSet(name, "NetPort", obj.(NetPort))
+		})
 }
 
 func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
-	// # ipset list myset | awk '$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'
+	// format to parse:
 	// 127.0.0.1
 	// 127.0.0.2
-	cmd := fmt.Sprintf(IPSetListWithAwk, name)
-	res := h.exec.RunCommand("sh", "-c", cmd)
-	if res.Err != nil || res.ExitCode != 0 {
-		log.Debugf("Problem listing ipset %s - probably it's OK and it just doesn't exist: "+
-			"%v, stdErr: %s", name, res.Err, res.StdErr)
-		return []net.IP{}, res.Err
+	lines, err := h.getIPSetEntries(name)
+	if err != nil {
+		return []net.IP{}, err
 	}
-	lines := strings.Split(res.StdOut, "\n")
 	result := make([]net.IP, 0, len(lines))
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
 		ip := net.ParseIP(strings.TrimSpace(line))
 		if ip != nil {
 			result = append(result, ip)
@@ -153,22 +173,121 @@ func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
 	return result, nil
 }
 
-func (h *execIPSetHelper) addIPToSet(name string, ip net.IP) error {
-	res := h.exec.RunCommand("ipset", "add", name, ip.String())
+func (h *execIPSetHelper) GetNetPorts(name string) ([]NetPort, error) {
+	// format to parse:
+	// 10.0.0.0/8,tcp:80
+	lines, err := h.getIPSetEntries(name)
+	if err != nil {
+		return []NetPort{}, err
+	}
+	result := make([]NetPort, 0, len(lines))
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		entry := strings.Split(strings.TrimSpace(line), ",")
+		_, ipnet, err := net.ParseCIDR(entry[0])
+		if err != nil {
+			return []NetPort{}, err
+		}
+
+		protoPort := strings.Split(entry[1], ":")
+		proto, err := ParseProtocol(protoPort[0])
+		if err != nil {
+			return []NetPort{}, err
+		}
+
+		pt, err := strconv.ParseUint(protoPort[1], 10, 16)
+		if err != nil {
+			return []NetPort{}, err
+		}
+		port := uint16(pt)
+
+		result = append(result, NetPort{
+			Net:      *ipnet,
+			Protocol: proto,
+			Port:     port,
+		})
+	}
+	return result, nil
+}
+
+func (h *execIPSetHelper) ensureSetHasOnlyGeneric(setName, typeName string, required []interface{},
+	getter func(setName string) ([]interface{}, error),
+	comparer func(e1, e2 interface{}) bool,
+	adder func(setName string, obj interface{}) error,
+	remover func(setName string, obj interface{}) error) error {
+
+	current, err := getter(setName)
+	if err != nil {
+		return err
+	}
+	// find the diff
+	toAdd, toRemove := collections.GetSlicesDifferences(required, current, comparer)
+
+	for _, el := range toAdd {
+		log.Debugf("Adding %s %v to ipset %s", typeName, el, setName)
+		if err := adder(setName, el); err != nil {
+			log.Errorf("Error adding entry %v to ipset %s", el, setName)
+			return err
+		}
+	}
+	for _, el := range toRemove {
+		log.Debugf("Removing %s %v from ipset %s", typeName, el, setName)
+		if err := remover(setName, el); err != nil {
+			log.Debugf("Error removing entry %v from ipset %s", el, setName)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (h *execIPSetHelper) getIPSetEntries(name string) ([]string, error) {
+	// # ipset list myset | awk '$0 ~ "^Members:$" {found=1; ln=NR}; NR>ln && found == 1 {print $1}'
+	cmd := fmt.Sprintf(IPSetListWithAwk, name)
+	res := h.exec.RunCommand("sh", "-c", cmd)
 	if res.Err != nil || res.ExitCode != 0 {
-		log.Errorf("Error adding IP %s to ipset %s: %v, stdErr: %s",
-			ip.String(), name, res.Err, res.StdErr)
+		log.Debugf("Problem listing ipset %s - probably it's OK and it just doesn't exist: "+
+			"%v, stdErr: %s", name, res.Err, res.StdErr)
+		return nil, res.Err
+	}
+	lines := strings.Split(res.StdOut, "\n")
+	return lines, nil
+}
+
+func (h *execIPSetHelper) addElementToSet(setName, elementTypeName string, element fmt.Stringer) error {
+	res := h.exec.RunCommand("ipset", "add", setName, element.String())
+	if res.Err != nil || res.ExitCode != 0 {
+		log.Errorf("Error adding %s %s to ipset %s: %v, stdErr: %s",
+			elementTypeName, element.String(), setName, res.Err, res.StdErr)
 		return res.Err
 	}
 	return nil
 }
 
-func (h *execIPSetHelper) removeIPFromSet(name string, ip net.IP) error {
-	res := h.exec.RunCommand("ipset", "del", name, ip.String())
+func (h *execIPSetHelper) removeElementFromSet(setName, elementTypeName string, element fmt.Stringer) error {
+	res := h.exec.RunCommand("ipset", "del", setName, element.String())
 	if res.Err != nil || res.ExitCode != 0 {
-		log.Debugf("Error removing IP %s from ipset %s: %v, stdErr: %s",
-			ip.String(), name, res.Err, res.StdErr)
+		log.Debugf("Error removing %s %s from ipset %s: %v, stdErr: %s",
+			elementTypeName, element.String(), setName, res.Err, res.StdErr)
 		return res.Err
 	}
 	return nil
+}
+
+func ipSliceToInterface(ips []net.IP) []interface{} {
+	res := make([]interface{}, len(ips))
+	for i, ip := range ips {
+		res[i] = ip
+	}
+	return res
+}
+
+func netPortSliceToInterface(nps []NetPort) []interface{} {
+	res := make([]interface{}, len(nps))
+	for i, np := range nps {
+		res[i] = np
+	}
+	return res
 }
