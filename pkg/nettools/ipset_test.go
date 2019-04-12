@@ -252,18 +252,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 }
 
 func Test_execIPSetHelper_GetNetPorts(t *testing.T) {
-	_, netAddr1, _ := net.ParseCIDR("10.10.0.0/24")
-	np1 := nt.NetPort{
-		Net:      *netAddr1,
-		Port:     80,
-		Protocol: nt.TCP,
-	}
-	_, netAddr2, _ := net.ParseCIDR("10.20.0.0/24")
-	np2 := nt.NetPort{
-		Net:      *netAddr2,
-		Port:     8080,
-		Protocol: nt.UDP,
-	}
+	np1, np2 := getSampleNetPorts()
 	tests := []struct {
 		name     string
 		setName  string
@@ -322,6 +311,99 @@ func Test_execIPSetHelper_GetNetPorts(t *testing.T) {
 	}
 }
 
+func Test_execIPSetHelper_EnsureSetHasOnlyNetPort(t *testing.T) {
+	np1, np2 := getSampleNetPorts()
+	np3 := getDifferentSampleNetPorts()
+	tests := []struct {
+		name     string
+		setName  string
+		err      error
+		expected []nt.NetPort
+		mockInfo []*cmdmock.ExecInfo
+	}{
+		{
+			name:     "sync empty ipset with empty required set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+			},
+		},
+		{
+			name:     "sync empty ipset with non empty required set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{np1, np2},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset add 12341234abc %s", np1),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset add 12341234abc %s", np2),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+			},
+		},
+		{
+			name:     "sync non empty ipset with empty required set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: execResultIpsetNetPorts(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset del 12341234abc %s", np1),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset del 12341234abc %s", np2),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+			},
+		},
+		{
+			name:     "sync non empty ipset with non empty required set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{np2, np3},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: execResultIpsetNetPorts(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset add 12341234abc %s", np3),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+				{
+					Expected: fmt.Sprintf("ipset del 12341234abc %s", np1),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			execMock := cmdmock.NewMockExecutorFromInfos(t, tt.mockInfo...)
+			ipSetHelper := nt.NewExecIPSetHelper(execMock)
+			err := ipSetHelper.EnsureSetHasOnlyNetPort(tt.setName, tt.expected)
+			assert.Equal(t, tt.err, err)
+			execMock.ValidateCallNum()
+		})
+	}
+}
 func execResultIpsetNotFound() *command.ExecResult {
 	return &command.ExecResult{
 		ExitCode: 1,
@@ -339,7 +421,34 @@ func execResultIpsetIPs() *command.ExecResult {
 }
 
 func execResultIpsetNetPorts() *command.ExecResult {
+	np1, np2 := getSampleNetPorts()
 	return &command.ExecResult{
-		StdOut: "10.10.0.0/24,tcp:80\n10.20.0.0/24,udp:8080\n",
+		StdOut: fmt.Sprintf("%s\n%s\n", np1.String(), np2.String()),
 	}
+}
+
+func getSampleNetPorts() (nt.NetPort, nt.NetPort) {
+	_, netAddr1, _ := net.ParseCIDR("10.10.0.0/24")
+	np1 := nt.NetPort{
+		Net:      *netAddr1,
+		Port:     80,
+		Protocol: nt.TCP,
+	}
+	_, netAddr2, _ := net.ParseCIDR("10.20.0.0/24")
+	np2 := nt.NetPort{
+		Net:      *netAddr2,
+		Port:     8080,
+		Protocol: nt.UDP,
+	}
+	return np1, np2
+}
+
+func getDifferentSampleNetPorts() nt.NetPort {
+	_, netAddr2, _ := net.ParseCIDR("10.120.0.0/24")
+	np := nt.NetPort{
+		Net:      *netAddr2,
+		Port:     8080,
+		Protocol: nt.UDP,
+	}
+	return np
 }
