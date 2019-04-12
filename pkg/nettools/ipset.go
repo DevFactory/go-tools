@@ -162,6 +162,9 @@ func (h *execIPSetHelper) GetIPs(name string) ([]net.IP, error) {
 	}
 	result := make([]net.IP, 0, len(lines))
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
 		ip := net.ParseIP(strings.TrimSpace(line))
 		if ip != nil {
 			result = append(result, ip)
@@ -179,21 +182,24 @@ func (h *execIPSetHelper) GetNetPorts(name string) ([]NetPort, error) {
 	}
 	result := make([]NetPort, 0, len(lines))
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
 		entry := strings.Split(strings.TrimSpace(line), ",")
 		_, ipnet, err := net.ParseCIDR(entry[0])
 		if err != nil {
-			return nil, err
+			return []NetPort{}, err
 		}
 
 		protoPort := strings.Split(entry[1], ":")
 		proto, err := ParseProtocol(protoPort[0])
 		if err != nil {
-			return nil, err
+			return []NetPort{}, err
 		}
 
 		pt, err := strconv.ParseUint(protoPort[1], 10, 16)
 		if err != nil {
-			return nil, err
+			return []NetPort{}, err
 		}
 		port := uint16(pt)
 

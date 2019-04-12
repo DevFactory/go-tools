@@ -251,6 +251,77 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 	}
 }
 
+func Test_execIPSetHelper_GetNetPorts(t *testing.T) {
+	_, netAddr1, _ := net.ParseCIDR("10.10.0.0/24")
+	np1 := nt.NetPort{
+		Net:      *netAddr1,
+		Port:     80,
+		Protocol: nt.TCP,
+	}
+	_, netAddr2, _ := net.ParseCIDR("10.20.0.0/24")
+	np2 := nt.NetPort{
+		Net:      *netAddr2,
+		Port:     8080,
+		Protocol: nt.UDP,
+	}
+	tests := []struct {
+		name     string
+		setName  string
+		err      error
+		expected []nt.NetPort
+		mockInfo []*cmdmock.ExecInfo
+	}{
+		{
+			name:     "get from existing empty set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: netth.ExecResultOKNoOutput(),
+				},
+			},
+		},
+		{
+			name:    "get from non existing set",
+			setName: "12341234abc",
+			err: &exec.ExitError{
+				Stderr: []byte("ipset v6.34: The set with the given name does not exist"),
+			},
+			expected: []nt.NetPort{},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: execResultIpsetNotFound(),
+				},
+			},
+		},
+		{
+			name:     "get from existing non empty set",
+			setName:  "12341234abc",
+			err:      nil,
+			expected: []nt.NetPort{np1, np2},
+			mockInfo: []*cmdmock.ExecInfo{
+				{
+					Expected: fmt.Sprintf("sh -c %s", fmt.Sprintf(nettools.IPSetListWithAwk, "12341234abc")),
+					Returned: execResultIpsetNetPorts(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			execMock := cmdmock.NewMockExecutorFromInfos(t, tt.mockInfo...)
+			ipSetHelper := nt.NewExecIPSetHelper(execMock)
+			nps, err := ipSetHelper.GetNetPorts(tt.setName)
+			assert.Equal(t, tt.expected, nps)
+			assert.Equal(t, tt.err, err)
+			execMock.ValidateCallNum()
+		})
+	}
+}
+
 func execResultIpsetNotFound() *command.ExecResult {
 	return &command.ExecResult{
 		ExitCode: 1,
@@ -264,5 +335,11 @@ func execResultIpsetNotFound() *command.ExecResult {
 func execResultIpsetIPs() *command.ExecResult {
 	return &command.ExecResult{
 		StdOut: "127.0.0.1\n127.0.0.2\n",
+	}
+}
+
+func execResultIpsetNetPorts() *command.ExecResult {
+	return &command.ExecResult{
+		StdOut: "10.10.0.0/24,tcp:80\n10.20.0.0/24,udp:8080\n",
 	}
 }
