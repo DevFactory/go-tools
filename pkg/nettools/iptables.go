@@ -36,7 +36,7 @@ const (
 	iptablesRetriesDelayMSec = 100
 	// this uses awk to list the content of a single chain in a table using iptables-save command
 	awkIptablesSaveMagicFilter = "iptables-save | awk -v table=%s -v chain=%s " +
-		`'$0 ~ "^\*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
+		`'$0 ~ "^*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
 )
 
 // IPTablesRuleArgs provides arguments for an iptables rule
