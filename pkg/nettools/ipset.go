@@ -91,7 +91,8 @@ func (h *execIPSetHelper) EnsureSetExists(name, setType string) error {
 	// ipset create [name] [type=hash:ip] comment counters -exist
 	log.Debugf("Ensuring ipset %s exists", name)
 	res := h.exec.RunCommand("ipset", "create", name, setType, "comment", "counters", "-exist")
-	if res.Err != nil || res.ExitCode != 0 {
+	if (res.Err != nil || res.ExitCode != 0) && !(res.ExitCode == 1 &&
+		strings.Index(res.StdErr, "Set cannot be created: set with the same name already exists") >= 0) {
 		log.Debugf("Error creating/checking ipset %s of type %s: %v, stdErr: %s",
 			name, setType, res.Err, res.StdErr)
 		return res.Err
