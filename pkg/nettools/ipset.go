@@ -258,7 +258,7 @@ func (h *execIPSetHelper) getIPSetEntries(name string) ([]string, error) {
 }
 
 func (h *execIPSetHelper) addElementToSet(setName, elementTypeName string, element fmt.Stringer) error {
-	res := h.exec.RunCommand("ipset", "add", setName, element.String())
+	res := h.exec.RunCommand("ipset", "add", setName, element.String(), "-exist")
 	if res.Err != nil || res.ExitCode != 0 {
 		log.Errorf("Error adding %s %s to ipset %s: %v, stdErr: %s",
 			elementTypeName, element.String(), setName, res.Err, res.StdErr)
