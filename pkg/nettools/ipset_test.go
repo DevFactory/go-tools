@@ -190,11 +190,11 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
-					Expected: "ipset add 12341234abc 127.0.0.1",
+					Expected: "ipset add 12341234abc 127.0.0.1 -exist",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
-					Expected: "ipset add 12341234abc 127.0.0.2",
+					Expected: "ipset add 12341234abc 127.0.0.2 -exist",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 			},
@@ -230,7 +230,7 @@ func Test_execIPSetHelper_EnsureSetHasOnly(t *testing.T) {
 					Returned: execResultIpsetIPs(),
 				},
 				{
-					Expected: "ipset add 12341234abc 127.0.0.3",
+					Expected: "ipset add 12341234abc 127.0.0.3 -exist",
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
@@ -344,11 +344,11 @@ func Test_execIPSetHelper_EnsureSetHasOnlyNetPort(t *testing.T) {
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
-					Expected: fmt.Sprintf("ipset add 12341234abc %s", np1),
+					Expected: fmt.Sprintf("ipset add 12341234abc %s -exist", np1),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{
-					Expected: fmt.Sprintf("ipset add 12341234abc %s", np2),
+					Expected: fmt.Sprintf("ipset add 12341234abc %s -exist", np2),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 			},
@@ -384,7 +384,7 @@ func Test_execIPSetHelper_EnsureSetHasOnlyNetPort(t *testing.T) {
 					Returned: execResultIpsetNetPorts(),
 				},
 				{
-					Expected: fmt.Sprintf("ipset add 12341234abc %s", np3),
+					Expected: fmt.Sprintf("ipset add 12341234abc %s -exist", np3),
 					Returned: netth.ExecResultOKNoOutput(),
 				},
 				{

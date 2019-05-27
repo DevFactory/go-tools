@@ -29,7 +29,7 @@ import (
 
 const (
 	awkIPTablesForNatTest = "sh -c iptables-save | awk -v table=nat -v chain=test " +
-		`'$0 ~ "^\*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
+		`'$0 ~ "^*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
 )
 
 func Test_execIPTablesHelper_EnsureChainExists(t *testing.T) {
