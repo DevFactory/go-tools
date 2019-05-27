@@ -34,8 +34,10 @@ var (
 const (
 	iptablesRetries          = 3
 	iptablesRetriesDelayMSec = 100
-	// this uses awk to list the content of a single chain in a table using iptables-save command
-	awkIptablesSaveMagicFilter = "iptables-save | awk -v table=%s -v chain=%s " +
+	iptablesSaveBin = "iptables-save"
+	// AwkIptablesSaveMagicFilter defines awk program that filters the content of a 
+	// single chain in a table from iptables-save command output
+	AwkIptablesSaveMagicFilter = "awk -v table=%s -v chain=%s " +
 		`'$0 ~ "^*"table"$" {in_table=1};$1 ~ "^COMMIT$" {in_table=0};in_table == 1 && $2 ~ "^"chain"$" {print $0}'`
 )
 
@@ -298,7 +300,8 @@ func (h *execIPTablesHelper) runExistsRule(tableName, chainName, selector, comme
 }
 
 func (h *execIPTablesHelper) listRules(tableName, chainName, regexpFilter string) ([]string, error) {
-	shCommand := fmt.Sprintf(awkIptablesSaveMagicFilter, tableName, chainName)
+	shCommand := fmt.Sprintf("%s | %s", iptablesSaveBin, 
+		fmt.Sprintf(AwkIptablesSaveMagicFilter, tableName, chainName))
 	res := h.exec.RunCommandWithRetriesAndDelay(iptablesRetries, iptablesRetriesDelayMSec, []int{0},
 		"sh", "-c", shCommand)
 	if res.Err != nil || res.StdErr != "" {
